@@ -60,9 +60,15 @@ function randomGridPosition(cols, rows) {
 	};
 }
 
+function getBoardSize() {
+	return {
+		cols: Math.floor(canvas.clientWidth / CELL_SIZE),
+		rows: Math.floor(canvas.clientHeight / CELL_SIZE)
+	};
+}
+
 function initSnake() {
-	const cols = Math.floor(canvas.clientWidth / CELL_SIZE);
-	const rows = Math.floor(canvas.clientHeight / CELL_SIZE);
+	const { cols, rows } = getBoardSize();
 	const cx = Math.floor(cols / 2);
 	const cy = Math.floor(rows / 2);
 	snake = [
@@ -73,9 +79,14 @@ function initSnake() {
 }
 
 function placeApple() {
-	const cols = Math.floor(canvas.clientWidth / CELL_SIZE);
-	const rows = Math.floor(canvas.clientHeight / CELL_SIZE);
-	apple = randomGridPosition(cols, rows);
+	const { cols, rows } = getBoardSize();
+	let nextApple = randomGridPosition(cols, rows);
+
+	while (snake.some(segment => segment.x === nextApple.x && segment.y === nextApple.y)) {
+		nextApple = randomGridPosition(cols, rows);
+	}
+
+	apple = nextApple;
 }
 
 function drawSnake() {
@@ -90,6 +101,10 @@ function draw() {
 	drawBackground();
 	drawSnake();
 	drawApple();
+}
+
+function isInsideBounds(position, cols, rows) {
+	return position.x >= 0 && position.x < cols && position.y >= 0 && position.y < rows;
 }
 
 function init() {
@@ -116,16 +131,21 @@ function step() {
 	const rows = Math.floor(canvas.clientHeight / CELL_SIZE);
 	const head = snake[snake.length - 1];
 	const newHead = { x: head.x + dir.x, y: head.y + dir.y };
+	const ateApple = newHead.x === apple.x && newHead.y === apple.y;
 
-	// Stop if next step goes outside bounds
-	if (newHead.x < 0 || newHead.x >= cols || newHead.y < 0 || newHead.y >= rows) {
+	// Stop before the snake leaves the board.
+	if (!isInsideBounds(newHead, cols, rows)) {
 		stopLoop();
 		return;
 	}
 
-	// Move: add new head and remove tail
+	// Move: add new head, and keep the tail only when eating an apple.
 	snake.push(newHead);
-	snake.shift();
+	if (!ateApple) {
+		snake.shift();
+	} else {
+		placeApple();
+	}
 	draw();
 }
 
