@@ -140,3 +140,27 @@ function stopLoop() {
 		gameInterval = null;
 	}
 }
+
+// Keyboard controls: arrow keys and WASD
+function setDirection(newDir) {
+	// Prevent reversing directly onto itself
+	if (newDir.x === -dir.x && newDir.y === -dir.y) return;
+	dir = newDir;
+}
+
+window.addEventListener('keydown', (e) => {
+	const key = e.key;
+	if (key === 'ArrowUp' || key === 'w' || key === 'W') {
+		setDirection({ x: 0, y: -1 });
+		e.preventDefault();
+	} else if (key === 'ArrowDown' || key === 's' || key === 'S') {
+		setDirection({ x: 0, y: 1 });
+		e.preventDefault();
+	} else if (key === 'ArrowLeft' || key === 'a' || key === 'A') {
+		setDirection({ x: -1, y: 0 });
+		e.preventDefault();
+	} else if (key === 'ArrowRight' || key === 'd' || key === 'D') {
+		setDirection({ x: 1, y: 0 });
+		e.preventDefault();
+	}
+});
