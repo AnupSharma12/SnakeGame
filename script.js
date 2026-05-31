@@ -15,6 +15,10 @@ const CELL_SIZE = 20;
 // Simple snake state: array of segments {x,y}
 let snake = [];
 let apple = { x: 0, y: 0 };
+// Movement state
+let dir = { x: 1, y: 0 }; // start moving right
+let gameInterval = null;
+let tickMs = 200; // movement interval
 
 function resizeCanvas() {
 	const dpr = window.devicePixelRatio || 1;
@@ -93,13 +97,46 @@ function init() {
 	initSnake();
 	placeApple();
 	draw();
+	startLoop();
 }
 
 window.addEventListener('resize', () => {
 	resizeCanvas();
 	initSnake();
 	placeApple();
+	stopLoop();
 	draw();
+	startLoop();
 });
 
 init();
+
+function step() {
+	const cols = Math.floor(canvas.clientWidth / CELL_SIZE);
+	const rows = Math.floor(canvas.clientHeight / CELL_SIZE);
+	const head = snake[snake.length - 1];
+	const newHead = { x: head.x + dir.x, y: head.y + dir.y };
+
+	// Stop if next step goes outside bounds
+	if (newHead.x < 0 || newHead.x >= cols || newHead.y < 0 || newHead.y >= rows) {
+		stopLoop();
+		return;
+	}
+
+	// Move: add new head and remove tail
+	snake.push(newHead);
+	snake.shift();
+	draw();
+}
+
+function startLoop() {
+	stopLoop();
+	gameInterval = setInterval(step, tickMs);
+}
+
+function stopLoop() {
+	if (gameInterval) {
+		clearInterval(gameInterval);
+		gameInterval = null;
+	}
+}
