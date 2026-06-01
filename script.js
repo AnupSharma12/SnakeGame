@@ -25,7 +25,9 @@ let apple = { x: 0, y: 0 };
 let score = 0;
 // Movement state
 let dir = { x: 1, y: 0 }; // start moving right
-let gameInterval = null;
+let animationFrameId = null;
+let lastFrameTime = 0;
+let accumulator = 0;
 let tickMs = 200; // movement interval
 
 function resizeCanvas() {
@@ -187,13 +189,35 @@ function step() {
 
 function startLoop() {
 	stopLoop();
-	gameInterval = setInterval(step, tickMs);
+	lastFrameTime = 0;
+	accumulator = 0;
+	animationFrameId = requestAnimationFrame(gameLoop);
 }
 
 function stopLoop() {
-	if (gameInterval) {
-		clearInterval(gameInterval);
-		gameInterval = null;
+	if (animationFrameId !== null) {
+		cancelAnimationFrame(animationFrameId);
+		animationFrameId = null;
+	}
+}
+
+function gameLoop(timestamp) {
+	if (lastFrameTime === 0) {
+		lastFrameTime = timestamp;
+	}
+
+	const delta = Math.min(timestamp - lastFrameTime, 100);
+	lastFrameTime = timestamp;
+	accumulator += delta;
+
+	while (accumulator >= tickMs) {
+		step();
+		accumulator -= tickMs;
+		if (animationFrameId === null) return;
+	}
+
+	if (animationFrameId !== null) {
+		animationFrameId = requestAnimationFrame(gameLoop);
 	}
 }
 
