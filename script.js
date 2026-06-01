@@ -42,6 +42,7 @@ let tickMs = 200;
 let baseTickMs = 200;
 let isGameOver = false;
 let isPaused = false;
+let prevSnake = [];
 
 function playSound(sound) {
 	if (!sound) return;
@@ -229,28 +230,48 @@ function placeApple() {
 	}
 
 	apple = nextApple;
+	apple.spawnTime = performance.now();
 }
 
-function drawSnake() {
+function drawSnake(interp = 1) {
 	const lastIndex = snake.length - 1;
-	snake.forEach((segment, idx) => {
+	for (let idx = 0; idx < snake.length; idx++) {
+		const segment = snake[idx];
+		const prev = prevSnake[idx] || segment;
+		const x = prev.x + (segment.x - prev.x) * interp;
+		const y = prev.y + (segment.y - prev.y) * interp;
 		const isHead = idx === lastIndex;
-		drawRectAtGrid(segment.x, segment.y, COLORS.snake, { head: isHead });
-	});
+		drawRectAtGrid(x, y, COLORS.snake, { head: isHead });
+	}
 }
 
-function drawApple() {
+function drawApple(interp = 1) {
+	const now = performance.now();
+	const spawn = apple.spawnTime || 0;
+	const age = Math.max(0, now - spawn);
+	// pulse that decays over ~1.2s, plus a slow idle bob
+	const decay = Math.exp(-age / 1200);
+	const bob = Math.sin((now / 700) * Math.PI * 2) * 0.02;
+	const pulse = 1 + bob + 0.06 * Math.sin((age / 180) * Math.PI * 2) * decay;
+
+	ctx.save();
+	const cx = (apple.x + 0.5) * CELL_SIZE;
+	const cy = (apple.y + 0.5) * CELL_SIZE;
+	ctx.translate(cx, cy);
+	ctx.scale(pulse, pulse);
+	ctx.translate(-cx, -cy);
 	drawCircleAtGrid(apple.x, apple.y, COLORS.apple);
+	ctx.restore();
 }
 
 function updateScoreDisplay() {
 	if (scoreEl) scoreEl.textContent = 'Score: ' + score;
 }
 
-function draw() {
+function draw(interp = 1) {
 	drawBackground();
-	drawSnake();
-	drawApple();
+	drawSnake(interp);
+	drawApple(interp);
 	updateScoreDisplay();
 }
 
@@ -305,6 +326,7 @@ function togglePause() {
 function init() {
 	resizeCanvas();
 	initSnake();
+	prevSnake = snake.map(s => ({ x: s.x, y: s.y }));
 	placeApple();
 	score = 0;
 	isGameOver = false;
@@ -325,6 +347,7 @@ function resetGame() {
 	isPaused = false;
 	dir = { x: 1, y: 0 };
 	initSnake();
+	prevSnake = snake.map(s => ({ x: s.x, y: s.y }));
 	placeApple();
 	score = 0;
 	baseTickMs = difficultyEl ? Number(difficultyEl.value) || baseTickMs : baseTickMs;
@@ -336,6 +359,8 @@ function resetGame() {
 }
 
 function step() {
+	// capture previous positions for interpolation
+	prevSnake = snake.map(s => ({ x: s.x, y: s.y }));
 	const { cols, rows } = getBoardSize();
 	const head = snake[snake.length - 1];
 	const newHead = { x: head.x + dir.x, y: head.y + dir.y };
@@ -362,8 +387,6 @@ function step() {
 		updateScoreDisplay();
 		updateTickMs();
 	}
-
-	draw();
 }
 
 function startLoop() {
@@ -400,9 +423,11 @@ function gameLoop(timestamp) {
 		if (animationFrameId === null || isPaused || isGameOver) return;
 	}
 
-	if (animationFrameId !== null) {
-		animationFrameId = requestAnimationFrame(gameLoop);
-	}
+	// render with interpolation factor (0..1)
+	const interp = Math.max(0, Math.min(1, accumulator / tickMs));
+	draw(interp);
+
+	animationFrameId = requestAnimationFrame(gameLoop);
 }
 
 function setDirection(newDir) {
