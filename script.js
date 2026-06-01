@@ -75,6 +75,23 @@ function resizeCanvas() {
 function drawBackground() {
 	ctx.fillStyle = COLORS.background;
 	ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+	const width = canvas.clientWidth;
+	const height = canvas.clientHeight;
+	const vignette = ctx.createRadialGradient(width * 0.5, height * 0.38, Math.min(width, height) * 0.12, width * 0.5, height * 0.5, Math.max(width, height) * 0.8);
+	vignette.addColorStop(0, 'rgba(255, 255, 255, 0.22)');
+	vignette.addColorStop(0.65, 'rgba(255, 255, 255, 0.04)');
+	vignette.addColorStop(1, 'rgba(15, 23, 42, 0.08)');
+	ctx.fillStyle = vignette;
+	ctx.fillRect(0, 0, width, height);
+
+	const sheen = ctx.createLinearGradient(0, 0, width, height);
+	sheen.addColorStop(0, 'rgba(255, 255, 255, 0.06)');
+	sheen.addColorStop(0.5, 'rgba(255, 255, 255, 0)');
+	sheen.addColorStop(1, 'rgba(15, 23, 42, 0.05)');
+	ctx.fillStyle = sheen;
+	ctx.fillRect(0, 0, width, height);
+
 	ctx.strokeStyle = COLORS.border;
 	ctx.lineWidth = 1;
 	ctx.strokeRect(0.5, 0.5, canvas.clientWidth - 1, canvas.clientHeight - 1);

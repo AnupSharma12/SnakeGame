@@ -28,21 +28,26 @@ h1 {
 }
 
 .card {
-  background: #fbfbfb; /* slightly warm off-white */
+  position: relative;
+  background: linear-gradient(180deg, #fcfcfd 0%, #f7f8fa 100%);
   padding: 1rem;
   border-radius: 8px;
   border: 1px solid #e1e3e6; /* muted border */
   width: 100%;
-  box-shadow: none;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
 }
 
 #gameCanvas {
   display: block;
   width: 100%;
   aspect-ratio: 1 / 1;
-  background: #f8fafb; /* very subtle off-white for canvas */
-  border: 1px solid #d1d5db; /* soft, desaturated border */
-  border-radius: 6px;
+  background: radial-gradient(circle at 50% 35%, #fbfcfd 0%, #f4f6f8 56%, #ebeff3 100%);
+  border: 1px solid #ccd2d9;
+  border-radius: 14px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    inset 0 -1px 0 rgba(15, 23, 42, 0.05),
+    0 10px 22px rgba(15, 23, 42, 0.08);
 }
 
 .hud {
