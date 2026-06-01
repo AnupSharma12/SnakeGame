@@ -22,8 +22,8 @@ const gameOverSound = new Audio('sound/gameover.mp3');
 const COLORS = {
 	background: '#f8fafb',
 	border: '#d1d5db',
-	snake: '#4b5563',
-	apple: '#7c6b6b',
+	snake: '#3f4a52',
+	apple: '#b36b6b',
 	text: '#2b2e33'
 };
 
@@ -97,19 +97,102 @@ function drawBackground() {
 	ctx.strokeRect(0.5, 0.5, canvas.clientWidth - 1, canvas.clientHeight - 1);
 }
 
-function drawRectAtGrid(x, y, color) {
+function _roundRectPath(x, y, w, h, r) {
+	ctx.beginPath();
+	ctx.moveTo(x + r, y);
+	ctx.arcTo(x + w, y, x + w, y + h, r);
+	ctx.arcTo(x + w, y + h, x, y + h, r);
+	ctx.arcTo(x, y + h, x, y, r);
+	ctx.arcTo(x, y, x + w, y, r);
+	ctx.closePath();
+}
+
+function drawRectAtGrid(x, y, color, options = {}) {
+	const px = x * CELL_SIZE + 0.5;
+	const py = y * CELL_SIZE + 0.5;
+	const pad = 2;
+	const w = CELL_SIZE - 1 - pad;
+	const h = CELL_SIZE - 1 - pad;
+	const r = Math.max(4, Math.floor(CELL_SIZE * 0.22));
+
+	// soft drop shadow
+	ctx.fillStyle = 'rgba(15,23,42,0.08)';
+	_roundRectPath(px + 2, py + 2, w, h, r);
+	ctx.fill();
+
+	// main rounded segment
 	ctx.fillStyle = color;
-	ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE - 1, CELL_SIZE - 1);
+	_roundRectPath(px, py, w, h, r);
+	ctx.fill();
+
+	// subtle top highlight
+	ctx.fillStyle = 'rgba(255,255,255,0.06)';
+	ctx.save();
+	ctx.globalCompositeOperation = 'lighter';
+	_roundRectPath(px, py, w, Math.floor(h * 0.45), r);
+	ctx.fill();
+	ctx.restore();
+
+	// optional eye for head
+	if (options.head) {
+		const cx = px + w - Math.round(w * 0.24);
+		const cy = py + Math.round(h * 0.36);
+		const er = Math.max(1.5, CELL_SIZE * 0.06);
+		ctx.fillStyle = 'rgba(255,255,255,0.9)';
+		ctx.beginPath();
+		ctx.arc(cx, cy, er, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = 'rgba(15,23,42,0.9)';
+		ctx.beginPath();
+		ctx.arc(cx + 0.6, cy, er * 0.55, 0, Math.PI * 2);
+		ctx.fill();
+	}
 }
 
 function drawCircleAtGrid(x, y, color) {
 	const cx = x * CELL_SIZE + CELL_SIZE / 2;
 	const cy = y * CELL_SIZE + CELL_SIZE / 2;
-	const r = CELL_SIZE / 2 - 2;
-	ctx.fillStyle = color;
+	const r = CELL_SIZE * 0.42;
+
+	// radial gradient for shaded apple
+	const grad = ctx.createRadialGradient(cx - r * 0.35, cy - r * 0.45, r * 0.15, cx, cy, r);
+	grad.addColorStop(0, 'rgba(255,255,255,0.7)');
+	grad.addColorStop(0.18, lightenColor(color, 0.06));
+	grad.addColorStop(0.6, color);
+	grad.addColorStop(1, darkenColor(color, 0.08));
+
+	// soft shadow below
+	ctx.fillStyle = 'rgba(15,23,42,0.08)';
+	ctx.beginPath();
+	ctx.ellipse(cx + 2, cy + r * 0.5, r * 0.9, r * 0.36, 0, 0, Math.PI * 2);
+	ctx.fill();
+
+	// apple body
+	ctx.fillStyle = grad;
 	ctx.beginPath();
 	ctx.arc(cx, cy, r, 0, Math.PI * 2);
 	ctx.fill();
+
+	// small stem
+	ctx.fillStyle = 'rgba(80,60,40,0.9)';
+	ctx.fillRect(cx - 2, cy - r - 4, 4, 6);
+}
+
+// tiny helpers to nudge muted colors for gradients
+function lightenColor(hex, amt) {
+	const c = hexToRgb(hex);
+	return `rgba(${Math.min(255, Math.floor(c.r + 255 * amt))}, ${Math.min(255, Math.floor(c.g + 255 * amt))}, ${Math.min(255, Math.floor(c.b + 255 * amt))}, 1)`;
+}
+
+function darkenColor(hex, amt) {
+	const c = hexToRgb(hex);
+	return `rgba(${Math.max(0, Math.floor(c.r - 255 * amt))}, ${Math.max(0, Math.floor(c.g - 255 * amt))}, ${Math.max(0, Math.floor(c.b - 255 * amt))}, 1)`;
+}
+
+function hexToRgb(hex) {
+	const h = hex.replace('#', '');
+	const bigint = parseInt(h.length === 3 ? h.split('').map(ch => ch + ch).join('') : h, 16);
+	return { r: (bigint >> 16) & 255, g: (bigint >> 8) & 255, b: bigint & 255 };
 }
 
 function getBoardSize() {
@@ -149,7 +232,11 @@ function placeApple() {
 }
 
 function drawSnake() {
-	snake.forEach(segment => drawRectAtGrid(segment.x, segment.y, COLORS.snake));
+	const lastIndex = snake.length - 1;
+	snake.forEach((segment, idx) => {
+		const isHead = idx === lastIndex;
+		drawRectAtGrid(segment.x, segment.y, COLORS.snake, { head: isHead });
+	});
 }
 
 function drawApple() {
