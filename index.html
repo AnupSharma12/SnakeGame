@@ -12,6 +12,12 @@
         <h1>Snake</h1>
         <div class="hud">
           <span id="scoreDisplay">Score: 0</span>
+          <label for="difficulty" class="sr-only">Difficulty</label>
+          <select id="difficulty" aria-label="Difficulty">
+            <option value="300">Easy</option>
+            <option value="200" selected>Normal</option>
+            <option value="120">Hard</option>
+          </select>
           <button id="restartBtn" aria-label="Restart game">Restart</button>
         </div>
         <canvas id="gameCanvas" width="400" height="400" aria-label="Snake game board"></canvas>

@@ -1,6 +1,7 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const scoreEl = document.getElementById('scoreDisplay');
+const difficultyEl = document.getElementById('difficulty');
 const restartBtn = document.getElementById('restartBtn');
 const gameOverEl = document.getElementById('gameOver');
 const finalScoreEl = document.getElementById('finalScore');
@@ -28,7 +29,10 @@ let dir = { x: 1, y: 0 }; // start moving right
 let animationFrameId = null;
 let lastFrameTime = 0;
 let accumulator = 0;
-let tickMs = 200; // movement interval
+let tickMs = 200; // current movement interval (ms)
+let baseTickMs = 200; // base interval chosen by difficulty
+const minTickMs = 60; // fastest possible interval
+const speedStep = 6; // ms reduction per score
 
 function resizeCanvas() {
 	const dpr = window.devicePixelRatio || 1;
@@ -127,8 +131,15 @@ function init() {
 	initSnake();
 	placeApple();
 	score = 0;
+	// initialize difficulty/base tick
+	if (difficultyEl) baseTickMs = Number(difficultyEl.value) || 200;
+	updateTickMs();
 	draw();
 	startLoop();
+}
+
+function updateTickMs() {
+    tickMs = Math.max(minTickMs, baseTickMs - score * speedStep);
 }
 
 function resetGame() {
@@ -140,6 +151,8 @@ function resetGame() {
 	initSnake();
 	placeApple();
 	score = 0;
+	if (difficultyEl) baseTickMs = Number(difficultyEl.value) || baseTickMs;
+	updateTickMs();
 	updateScoreDisplay();
 	draw();
 	startLoop();
@@ -183,6 +196,7 @@ function step() {
 			score += 1;
 			placeApple();
 			updateScoreDisplay();
+			updateTickMs();
 		}
 	draw();
 }
@@ -253,6 +267,13 @@ if (restartBtn) {
 
 if (restartOverlayBtn) {
 	restartOverlayBtn.addEventListener('click', () => resetGame());
+}
+
+if (difficultyEl) {
+	difficultyEl.addEventListener('change', () => {
+		baseTickMs = Number(difficultyEl.value) || baseTickMs;
+		updateTickMs();
+	});
 }
 
 function showGameOver() {
