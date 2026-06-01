@@ -1,6 +1,7 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const scoreEl = document.getElementById('scoreDisplay');
+const restartBtn = document.getElementById('restartBtn');
 
 // Muted, low-saturation palette
 const COLORS = {
@@ -124,6 +125,17 @@ function init() {
 	startLoop();
 }
 
+function resetGame() {
+	stopLoop();
+	dir = { x: 1, y: 0 };
+	initSnake();
+	placeApple();
+	score = 0;
+	updateScoreDisplay();
+	draw();
+	startLoop();
+}
+
 window.addEventListener('resize', () => {
 	resizeCanvas();
 	initSnake();
@@ -201,3 +213,9 @@ window.addEventListener('keydown', (e) => {
 		e.preventDefault();
 	}
 });
+
+if (restartBtn) {
+	restartBtn.addEventListener('click', () => {
+		resetGame();
+	});
+}

@@ -55,6 +55,21 @@ h1 {
   color: #4b5563; /* muted slate */
 }
 
+#restartBtn {
+  margin-left: 0.75rem;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #e1e3e6;
+  background: #ffffff;
+  color: #374151;
+  cursor: pointer;
+}
+
+#restartBtn:hover {
+  background: #f3f4f6;
+}
+
 /* Responsive tweak */
 @media (max-width: 420px) {
   .app { width: 94vw; }
