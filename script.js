@@ -10,6 +10,14 @@ const finalScoreEl = document.getElementById('finalScore');
 const restartOverlayBtn = document.getElementById('restartOverlayBtn');
 const resumeOverlayBtn = document.getElementById('resumeOverlayBtn');
 
+const moveSound = new Audio('sound/move.mp3');
+const eatSound = new Audio('sound/food.mp3');
+const gameOverSound = new Audio('sound/gameover.mp3');
+
+[moveSound, eatSound, gameOverSound].forEach(sound => {
+	sound.preload = 'auto';
+});
+
 // Muted, low-saturation palette
 const COLORS = {
 	background: '#f8fafb',
@@ -34,6 +42,25 @@ let tickMs = 200;
 let baseTickMs = 200;
 let isGameOver = false;
 let isPaused = false;
+
+function playSound(sound) {
+	if (!sound) return;
+	const clip = sound.cloneNode();
+	clip.currentTime = 0;
+	clip.play().catch(() => {});
+}
+
+function playMoveSound() {
+	playSound(moveSound);
+}
+
+function playEatSound() {
+	playSound(eatSound);
+}
+
+function playGameOverSound() {
+	playSound(gameOverSound);
+}
 
 function resizeCanvas() {
 	const dpr = window.devicePixelRatio || 1;
@@ -226,6 +253,7 @@ function step() {
 		snake.shift();
 	} else {
 		score += 1;
+		playEatSound();
 		placeApple();
 		updateScoreDisplay();
 		updateTickMs();
@@ -275,7 +303,10 @@ function gameLoop(timestamp) {
 
 function setDirection(newDir) {
 	if (newDir.x === -dir.x && newDir.y === -dir.y) return;
-	dir = newDir;
+	if (newDir.x !== dir.x || newDir.y !== dir.y) {
+		playMoveSound();
+		dir = newDir;
+	}
 }
 
 function showGameOver() {
@@ -284,6 +315,7 @@ function showGameOver() {
 	isPaused = false;
 	updatePauseButton();
 	hidePauseMenu();
+	playGameOverSound();
 	if (finalScoreEl) finalScoreEl.textContent = String(score);
 	if (gameOverEl) gameOverEl.style.display = 'flex';
 }
