@@ -2,11 +2,13 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const scoreEl = document.getElementById('scoreDisplay');
 const difficultyEl = document.getElementById('difficulty');
+const pauseBtn = document.getElementById('pauseBtn');
 const restartBtn = document.getElementById('restartBtn');
 const gameOverEl = document.getElementById('gameOver');
+const pauseMenuEl = document.getElementById('pauseMenu');
 const finalScoreEl = document.getElementById('finalScore');
 const restartOverlayBtn = document.getElementById('restartOverlayBtn');
-let isGameOver = false;
+const resumeOverlayBtn = document.getElementById('resumeOverlayBtn');
 
 // Muted, low-saturation palette
 const COLORS = {
@@ -17,22 +19,21 @@ const COLORS = {
 	text: '#2b2e33'
 };
 
-// Grid / cell settings (used for positioning)
 const CELL_SIZE = 20;
+const minTickMs = 60;
+const speedStep = 6;
 
-// Simple snake state: array of segments {x,y}
 let snake = [];
 let apple = { x: 0, y: 0 };
 let score = 0;
-// Movement state
-let dir = { x: 1, y: 0 }; // start moving right
+let dir = { x: 1, y: 0 };
 let animationFrameId = null;
 let lastFrameTime = 0;
 let accumulator = 0;
-let tickMs = 200; // current movement interval (ms)
-let baseTickMs = 200; // base interval chosen by difficulty
-const minTickMs = 60; // fastest possible interval
-const speedStep = 6; // ms reduction per score
+let tickMs = 200;
+let baseTickMs = 200;
+let isGameOver = false;
+let isPaused = false;
 
 function resizeCanvas() {
 	const dpr = window.devicePixelRatio || 1;
@@ -60,18 +61,11 @@ function drawRectAtGrid(x, y, color) {
 function drawCircleAtGrid(x, y, color) {
 	const cx = x * CELL_SIZE + CELL_SIZE / 2;
 	const cy = y * CELL_SIZE + CELL_SIZE / 2;
-	const r = (CELL_SIZE / 2) - 2;
+	const r = CELL_SIZE / 2 - 2;
 	ctx.fillStyle = color;
 	ctx.beginPath();
 	ctx.arc(cx, cy, r, 0, Math.PI * 2);
 	ctx.fill();
-}
-
-function randomGridPosition(cols, rows) {
-	return {
-		x: Math.floor(Math.random() * cols),
-		y: Math.floor(Math.random() * rows)
-	};
 }
 
 function getBoardSize() {
@@ -81,13 +75,20 @@ function getBoardSize() {
 	};
 }
 
+function randomGridPosition(cols, rows) {
+	return {
+		x: Math.floor(Math.random() * cols),
+		y: Math.floor(Math.random() * rows)
+	};
+}
+
 function initSnake() {
 	const { cols, rows } = getBoardSize();
 	const cx = Math.floor(cols / 2);
 	const cy = Math.floor(rows / 2);
 	snake = [
 		{ x: cx - 1, y: cy },
-		{ x: cx,     y: cy },
+		{ x: cx, y: cy },
 		{ x: cx + 1, y: cy }
 	];
 }
@@ -104,11 +105,15 @@ function placeApple() {
 }
 
 function drawSnake() {
-	snake.forEach(seg => drawRectAtGrid(seg.x, seg.y, COLORS.snake));
+	snake.forEach(segment => drawRectAtGrid(segment.x, segment.y, COLORS.snake));
 }
 
 function drawApple() {
 	drawCircleAtGrid(apple.x, apple.y, COLORS.apple);
+}
+
+function updateScoreDisplay() {
+	if (scoreEl) scoreEl.textContent = 'Score: ' + score;
 }
 
 function draw() {
@@ -118,12 +123,52 @@ function draw() {
 	updateScoreDisplay();
 }
 
-function updateScoreDisplay() {
-    if (scoreEl) scoreEl.textContent = 'Score: ' + score;
-}
-
 function isInsideBounds(position, cols, rows) {
 	return position.x >= 0 && position.x < cols && position.y >= 0 && position.y < rows;
+}
+
+function updateTickMs() {
+	tickMs = Math.max(minTickMs, baseTickMs - score * speedStep);
+}
+
+function updatePauseButton() {
+	if (pauseBtn) pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
+}
+
+function showPauseMenu() {
+	if (pauseMenuEl) pauseMenuEl.style.display = 'flex';
+}
+
+function hidePauseMenu() {
+	if (pauseMenuEl) pauseMenuEl.style.display = 'none';
+}
+
+function hideGameOverMenu() {
+	if (gameOverEl) gameOverEl.style.display = 'none';
+}
+
+function pauseGame() {
+	if (isGameOver || isPaused) return;
+	isPaused = true;
+	updatePauseButton();
+	showPauseMenu();
+	stopLoop();
+}
+
+function resumeGame() {
+	if (isGameOver || !isPaused) return;
+	isPaused = false;
+	updatePauseButton();
+	hidePauseMenu();
+	startLoop();
+}
+
+function togglePause() {
+	if (isPaused) {
+		resumeGame();
+	} else {
+		pauseGame();
+	}
 }
 
 function init() {
@@ -131,65 +176,51 @@ function init() {
 	initSnake();
 	placeApple();
 	score = 0;
-	// initialize difficulty/base tick
-	if (difficultyEl) baseTickMs = Number(difficultyEl.value) || 200;
+	isGameOver = false;
+	isPaused = false;
+	baseTickMs = difficultyEl ? Number(difficultyEl.value) || 200 : 200;
 	updateTickMs();
+	updatePauseButton();
+	hidePauseMenu();
+	hideGameOverMenu();
 	draw();
 	startLoop();
 }
 
-function updateTickMs() {
-    tickMs = Math.max(minTickMs, baseTickMs - score * speedStep);
-}
-
 function resetGame() {
-	// hide overlay if visible
-	if (gameOverEl) gameOverEl.style.display = 'none';
+	hideGameOverMenu();
+	hidePauseMenu();
 	isGameOver = false;
-	stopLoop();
+	isPaused = false;
 	dir = { x: 1, y: 0 };
 	initSnake();
 	placeApple();
 	score = 0;
-	if (difficultyEl) baseTickMs = Number(difficultyEl.value) || baseTickMs;
+	baseTickMs = difficultyEl ? Number(difficultyEl.value) || baseTickMs : baseTickMs;
 	updateTickMs();
+	updatePauseButton();
 	updateScoreDisplay();
 	draw();
 	startLoop();
 }
 
-window.addEventListener('resize', () => {
-	resizeCanvas();
-	initSnake();
-	placeApple();
-	stopLoop();
-	draw();
-	startLoop();
-});
-
-init();
-
 function step() {
-	const cols = Math.floor(canvas.clientWidth / CELL_SIZE);
-	const rows = Math.floor(canvas.clientHeight / CELL_SIZE);
+	const { cols, rows } = getBoardSize();
 	const head = snake[snake.length - 1];
 	const newHead = { x: head.x + dir.x, y: head.y + dir.y };
 	const ateApple = newHead.x === apple.x && newHead.y === apple.y;
 
-	// Stop before the snake leaves the board.
 	if (!isInsideBounds(newHead, cols, rows)) {
 		showGameOver();
 		return;
 	}
 
-	// Collision checks feel more reliable when we account for the tail moving away.
 	const bodyToCheck = ateApple ? snake : snake.slice(0, -1);
-	if (bodyToCheck.some(seg => seg.x === newHead.x && seg.y === newHead.y)) {
+	if (bodyToCheck.some(segment => segment.x === newHead.x && segment.y === newHead.y)) {
 		showGameOver();
 		return;
 	}
 
-	// Move: add new head, and keep the tail only when eating an apple.
 	snake.push(newHead);
 	if (!ateApple) {
 		snake.shift();
@@ -199,6 +230,7 @@ function step() {
 		updateScoreDisplay();
 		updateTickMs();
 	}
+
 	draw();
 }
 
@@ -217,6 +249,11 @@ function stopLoop() {
 }
 
 function gameLoop(timestamp) {
+	if (isPaused || isGameOver) {
+		animationFrameId = null;
+		return;
+	}
+
 	if (lastFrameTime === 0) {
 		lastFrameTime = timestamp;
 	}
@@ -228,7 +265,7 @@ function gameLoop(timestamp) {
 	while (accumulator >= tickMs) {
 		step();
 		accumulator -= tickMs;
-		if (animationFrameId === null) return;
+		if (animationFrameId === null || isPaused || isGameOver) return;
 	}
 
 	if (animationFrameId !== null) {
@@ -236,14 +273,47 @@ function gameLoop(timestamp) {
 	}
 }
 
-// Keyboard controls: arrow keys and WASD
 function setDirection(newDir) {
-	// Prevent reversing directly onto itself
 	if (newDir.x === -dir.x && newDir.y === -dir.y) return;
 	dir = newDir;
 }
 
+function showGameOver() {
+	stopLoop();
+	isGameOver = true;
+	isPaused = false;
+	updatePauseButton();
+	hidePauseMenu();
+	if (finalScoreEl) finalScoreEl.textContent = String(score);
+	if (gameOverEl) gameOverEl.style.display = 'flex';
+}
+
+window.addEventListener('resize', () => {
+	resizeCanvas();
+	initSnake();
+	placeApple();
+	if (!isGameOver) {
+		draw();
+	}
+});
+
+document.addEventListener('visibilitychange', () => {
+	if (document.hidden) {
+		pauseGame();
+	}
+});
+
 window.addEventListener('keydown', (e) => {
+	if (e.key === 'Escape') {
+		togglePause();
+		e.preventDefault();
+		return;
+	}
+
+	if (isPaused || isGameOver) {
+		return;
+	}
+
 	const key = e.key;
 	if (key === 'ArrowUp' || key === 'w' || key === 'W') {
 		setDirection({ x: 0, y: -1 });
@@ -260,14 +330,20 @@ window.addEventListener('keydown', (e) => {
 	}
 });
 
+if (pauseBtn) {
+	pauseBtn.addEventListener('click', togglePause);
+}
+
 if (restartBtn) {
-	restartBtn.addEventListener('click', () => {
-		resetGame();
-	});
+	restartBtn.addEventListener('click', resetGame);
 }
 
 if (restartOverlayBtn) {
-	restartOverlayBtn.addEventListener('click', () => resetGame());
+	restartOverlayBtn.addEventListener('click', resetGame);
+}
+
+if (resumeOverlayBtn) {
+	resumeOverlayBtn.addEventListener('click', resumeGame);
 }
 
 if (difficultyEl) {
@@ -277,9 +353,5 @@ if (difficultyEl) {
 	});
 }
 
-function showGameOver() {
-	stopLoop();
-	isGameOver = true;
-	if (finalScoreEl) finalScoreEl.textContent = String(score);
-	if (gameOverEl) gameOverEl.style.display = 'flex';
-}
+resizeCanvas();
+init();
