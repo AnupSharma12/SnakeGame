@@ -131,6 +131,12 @@ function step() {
 	const rows = Math.floor(canvas.clientHeight / CELL_SIZE);
 	const head = snake[snake.length - 1];
 	const newHead = { x: head.x + dir.x, y: head.y + dir.y };
+
+	// End game if new head collides with the snake body
+	if (snake.some(seg => seg.x === newHead.x && seg.y === newHead.y)) {
+		stopLoop();
+		return;
+	}
 	const ateApple = newHead.x === apple.x && newHead.y === apple.y;
 
 	// Stop before the snake leaves the board.
