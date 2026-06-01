@@ -45,6 +45,16 @@ h1 {
   border-radius: 6px;
 }
 
+.hud {
+  margin: 0 0 0.5rem 0;
+  text-align: left;
+}
+
+#scoreDisplay {
+  font-size: 0.95rem;
+  color: #4b5563; /* muted slate */
+}
+
 /* Responsive tweak */
 @media (max-width: 420px) {
   .app { width: 94vw; }

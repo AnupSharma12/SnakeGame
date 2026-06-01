@@ -1,12 +1,14 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('scoreDisplay');
 
 // Muted, low-saturation palette
 const COLORS = {
 	background: '#f8fafb',
 	border: '#d1d5db',
 	snake: '#4b5563',
-	apple: '#7c6b6b'
+	apple: '#7c6b6b',
+	text: '#2b2e33'
 };
 
 // Grid / cell settings (used for positioning)
@@ -15,6 +17,7 @@ const CELL_SIZE = 20;
 // Simple snake state: array of segments {x,y}
 let snake = [];
 let apple = { x: 0, y: 0 };
+let score = 0;
 // Movement state
 let dir = { x: 1, y: 0 }; // start moving right
 let gameInterval = null;
@@ -101,6 +104,11 @@ function draw() {
 	drawBackground();
 	drawSnake();
 	drawApple();
+	updateScoreDisplay();
+}
+
+function updateScoreDisplay() {
+    if (scoreEl) scoreEl.textContent = 'Score: ' + score;
 }
 
 function isInsideBounds(position, cols, rows) {
@@ -111,6 +119,7 @@ function init() {
 	resizeCanvas();
 	initSnake();
 	placeApple();
+	score = 0;
 	draw();
 	startLoop();
 }
@@ -147,11 +156,13 @@ function step() {
 
 	// Move: add new head, and keep the tail only when eating an apple.
 	snake.push(newHead);
-	if (!ateApple) {
-		snake.shift();
-	} else {
-		placeApple();
-	}
+	    if (!ateApple) {
+			snake.shift();
+		} else {
+			score += 1;
+			placeApple();
+			updateScoreDisplay();
+		}
 	draw();
 }
 
