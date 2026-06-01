@@ -15,6 +15,13 @@
           <button id="restartBtn" aria-label="Restart game">Restart</button>
         </div>
         <canvas id="gameCanvas" width="400" height="400" aria-label="Snake game board"></canvas>
+        <div id="gameOver" class="overlay" role="dialog" aria-hidden="true">
+          <div class="overlay-card">
+            <h2>Game Over</h2>
+            <p>Your score: <span id="finalScore">0</span></p>
+            <button id="restartOverlayBtn">Play Again</button>
+          </div>
+        </div>
       </div>
     </main>
     <script src="script.js"></script>

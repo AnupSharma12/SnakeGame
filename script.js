@@ -2,6 +2,10 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const scoreEl = document.getElementById('scoreDisplay');
 const restartBtn = document.getElementById('restartBtn');
+const gameOverEl = document.getElementById('gameOver');
+const finalScoreEl = document.getElementById('finalScore');
+const restartOverlayBtn = document.getElementById('restartOverlayBtn');
+let isGameOver = false;
 
 // Muted, low-saturation palette
 const COLORS = {
@@ -126,6 +130,9 @@ function init() {
 }
 
 function resetGame() {
+	// hide overlay if visible
+	if (gameOverEl) gameOverEl.style.display = 'none';
+	isGameOver = false;
 	stopLoop();
 	dir = { x: 1, y: 0 };
 	initSnake();
@@ -155,14 +162,14 @@ function step() {
 
 	// End game if new head collides with the snake body
 	if (snake.some(seg => seg.x === newHead.x && seg.y === newHead.y)) {
-		stopLoop();
+		showGameOver();
 		return;
 	}
 	const ateApple = newHead.x === apple.x && newHead.y === apple.y;
 
 	// Stop before the snake leaves the board.
 	if (!isInsideBounds(newHead, cols, rows)) {
-		stopLoop();
+		showGameOver();
 		return;
 	}
 
@@ -218,4 +225,15 @@ if (restartBtn) {
 	restartBtn.addEventListener('click', () => {
 		resetGame();
 	});
+}
+
+if (restartOverlayBtn) {
+	restartOverlayBtn.addEventListener('click', () => resetGame());
+}
+
+function showGameOver() {
+	stopLoop();
+	isGameOver = true;
+	if (finalScoreEl) finalScoreEl.textContent = String(score);
+	if (gameOverEl) gameOverEl.style.display = 'flex';
 }

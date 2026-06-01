@@ -70,6 +70,29 @@ h1 {
   background: #f3f4f6;
 }
 
+/* Game over overlay */
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.overlay-card {
+  background: #fff;
+  color: #111;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  border: 1px solid #e6e6e6;
+  text-align: center;
+}
+
+.overlay-card h2 { margin: 0 0 0.5rem; font-size: 1.125rem; }
+.overlay-card p { margin: 0 0 0.75rem; color: #444; }
+.overlay-card button { padding: 6px 12px; border-radius:6px; border:1px solid #e1e3e6; background:#fff; cursor:pointer; }
+
 /* Responsive tweak */
 @media (max-width: 420px) {
   .app { width: 94vw; }
