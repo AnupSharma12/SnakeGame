@@ -29,6 +29,24 @@ h1 {
   color: inherit;
 }
 
+.subtitle {
+  margin: 0 0 0.5rem;
+  color: #55606a;
+  font-size: 0.95rem;
+  opacity: 0.95;
+}
+
+.instructions {
+  margin: 0 0 0.75rem;
+  color: #59616a;
+  font-size: 0.88rem;
+  line-height: 1.3;
+  text-align: left;
+}
+
+.instructions ul { margin: 0.35rem 0 0 1.05rem; padding: 0; }
+.instructions li { margin: 0.18rem 0; }
+
 .card {
   position: relative;
   background: linear-gradient(180deg, #fcfcfd 0%, #f7f8fa 100%);
