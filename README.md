@@ -13,6 +13,10 @@ python -m http.server 8000
 
 Notes: Some browsers block audio until the page receives a user gesture; press a key or click before sounds will play.
 
+## Screenshot
+![Snake Game screenshot](screenshot/1.png)
+![Snake Game screenshot](screenshot/2.png)
+
 ## Features
 - Playable Snake: keyboard controls (Arrow keys and WASD)
 - Smooth movement with frame interpolation
